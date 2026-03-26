@@ -3,11 +3,13 @@ import Modal from "./ui/Modal.jsx";
 import FormGroup from "./ui/FormGroup.jsx";
 import Input from "./ui/Input.jsx";
 import Select from "./ui/Select.jsx";
-import Stars from "./ui/Stars.jsx";
 import { MARKETPLACES, FUNCIONOU_OPTS } from "../constants/index.js";
+import { FUNC_STYLE } from "../styles/colors.js";
 
 export default function FeedForm({ open, onClose, onSave, initial, nextId, tests }) {
   const [f, setF] = useState({});
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   useEffect(() => {
     if (open) {
@@ -15,17 +17,10 @@ export default function FeedForm({ open, onClose, onSave, initial, nextId, tests
         testeRef: "", consultor: "", marketplace: "Mercado Livre", nicho: "",
         funcionou: "Sim", resultado: "", adaptacao: "",
         data: new Date().toISOString().slice(0, 10),
-        nota: 5, tempoDias: "",
+        tempoDias: "",
       });
     }
   }, [open, initial]);
-
-  const up = (k, v) => setF((p) => ({ ...p, [k]: v }));
-  const valid = f.testeRef && f.consultor && f.resultado;
-  const selTest = tests.find((t) => t.id === f.testeRef);
-
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef(null);
 
   useEffect(() => {
     if (!dropdownOpen) return;
@@ -36,17 +31,21 @@ export default function FeedForm({ open, onClose, onSave, initial, nextId, tests
     return () => document.removeEventListener("mousedown", handler);
   }, [dropdownOpen]);
 
+  const up = (k, v) => setF((p) => ({ ...p, [k]: v }));
+  const ok = f.testeRef && f.consultor && f.resultado;
+  const sel = tests.find((t) => t.id === f.testeRef);
+
   return (
-    <Modal open={open} onClose={onClose} title={initial ? "Editar feedback " + initial.id : "Novo feedback (" + nextId + ")"}>
-      <FormGroup label="Teste original (ID)" required>
+    <Modal open={open} onClose={onClose} title={initial ? "Editar " + initial.id : "Novo feedback (" + nextId + ")"}>
+      <FormGroup label="Teste original" required>
         <div ref={dropdownRef} style={{ position: "relative" }}>
           <button
             type="button"
             onClick={() => setDropdownOpen(!dropdownOpen)}
-            style={{ height: 36, padding: "0 12px", borderRadius: 8, border: "1px solid #d8d7d2", background: "#fff", fontSize: 13, color: selTest ? "#2c2c2a" : "#908f8a", width: "100%", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between" }}
+            style={{ height: 36, padding: "0 12px", borderRadius: 8, border: "1px solid #d8d7d2", background: "#fff", fontSize: 13, color: sel ? "#2c2c2a" : "#908f8a", width: "100%", cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", justifyContent: "space-between" }}
           >
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {selTest ? `${selTest.id} — ${selTest.consultor} — ${selTest.teste.slice(0, 40)}` : "Selecione o teste..."}
+              {sel ? `${sel.id} — ${sel.consultor} — ${sel.teste.slice(0, 40)}` : "Selecione o teste..."}
             </span>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, marginLeft: 8, transform: dropdownOpen ? "rotate(180deg)" : "none", transition: "transform .15s" }}>
               <path d="M3 4.5L6 7.5L9 4.5" stroke="#908f8a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -89,7 +88,16 @@ export default function FeedForm({ open, onClose, onSave, initial, nextId, tests
           <Input value={f.nicho || ""} onChange={(e) => up("nicho", e.target.value)} placeholder="Nicho onde aplicou" />
         </FormGroup>
         <FormGroup label="Funcionou?">
-          <Select value={f.funcionou || ""} onChange={(v) => up("funcionou", v)} options={FUNCIONOU_OPTS} style={{ width: "100%" }} />
+          <div style={{ display: "flex", gap: 6 }}>
+            {FUNCIONOU_OPTS.map((r) => {
+              const s = FUNC_STYLE[r];
+              return (
+                <button key={r} onClick={() => up("funcionou", r)} style={{ flex: 1, height: 36, borderRadius: 8, border: f.funcionou === r ? `2px solid ${s.fg}` : "1px solid #d8d7d2", background: f.funcionou === r ? s.bg : "#fff", color: f.funcionou === r ? s.fg : "#888", fontSize: 13, fontWeight: f.funcionou === r ? 700 : 400, cursor: "pointer" }}>
+                  {r}
+                </button>
+              );
+            })}
+          </div>
         </FormGroup>
         <div style={{ gridColumn: "1/-1" }}>
           <FormGroup label="Resultado" required>
@@ -98,12 +106,9 @@ export default function FeedForm({ open, onClose, onSave, initial, nextId, tests
         </div>
         <div style={{ gridColumn: "1/-1" }}>
           <FormGroup label="Adaptação feita">
-            <Input value={f.adaptacao || ""} onChange={(e) => up("adaptacao", e.target.value)} placeholder="O que mudou na aplicação?" />
+            <Input value={f.adaptacao || ""} onChange={(e) => up("adaptacao", e.target.value)} placeholder="O que mudou?" />
           </FormGroup>
         </div>
-        <FormGroup label="Nota">
-          <Stars n={f.nota || 5} size={22} interactive onChange={(v) => up("nota", v)} />
-        </FormGroup>
         <FormGroup label="Data">
           <Input type="date" value={f.data || ""} onChange={(e) => up("data", e.target.value)} />
         </FormGroup>
@@ -114,7 +119,7 @@ export default function FeedForm({ open, onClose, onSave, initial, nextId, tests
 
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 8 }}>
         <button onClick={onClose} style={{ height: 38, padding: "0 20px", borderRadius: 8, border: "1px solid #d8d7d2", background: "#fff", fontSize: 13, cursor: "pointer" }}>Cancelar</button>
-        <button disabled={!valid} onClick={() => onSave(f)} style={{ height: 38, padding: "0 24px", borderRadius: 8, border: "none", background: valid ? "#22c06e" : "#ccc", color: "#fff", fontSize: 13, fontWeight: 600, cursor: valid ? "pointer" : "not-allowed" }}>Salvar</button>
+        <button disabled={!ok} onClick={() => onSave(f)} style={{ height: 38, padding: "0 24px", borderRadius: 8, border: "none", background: ok ? "#16a050" : "#ccc", color: "#fff", fontSize: 13, fontWeight: 600, cursor: ok ? "pointer" : "not-allowed" }}>Salvar</button>
       </div>
     </Modal>
   );

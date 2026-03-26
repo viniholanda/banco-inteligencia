@@ -17,4 +17,6 @@ export const STATUS_LIST = ["Ativo", "Em avaliação", "Prática padrão", "Ence
 
 export const INVESTIMENTOS = ["Baixo", "Médio", "Alto"];
 
+export const RESULTADO_OPTS = ["Sucesso", "Parcial", "Fracasso"];
+
 export const FUNCIONOU_OPTS = ["Sim", "Parcial", "Não"];
